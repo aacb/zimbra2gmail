@@ -1,0 +1,23 @@
+# name antonio@unesp.br
+zimbraMailSieveScript: require ["fileinto", "reject", "tag", "flag"];
+
+# from1
+if anyof (address :all :contains :comparator "i;ascii-casemap" ["from"] "carlos@unesp.br",
+  address :all :contains :comparator "i;ascii-casemap" ["from"] "elfsenne@unesp.br",
+  address :all :contains :comparator "i;ascii-casemap" ["from"] "adriano@acmesecurity.org",
+  address :all :contains :comparator "i;ascii-casemap" ["from"] "carlos.coletti@unesp.br") {
+    tag "from1";
+}
+
+# keysigning_party
+if anyof (address :all :contains :comparator "i;ascii-casemap" ["to","cc"] "gpg-pgp-party@unesp.br") {
+    fileinto "Inbox/14.2keysigning";
+    stop;
+}
+
+# coral
+if anyof (address :all :contains :comparator "i;ascii-casemap" ["to","cc"] "coral@listas.unesp.br") {
+    fileinto "Inbox/14.1coral";
+    stop;
+}
+
