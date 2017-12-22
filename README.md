@@ -4,8 +4,8 @@
 > available in github.com, it can also be used to learn the steps used
 > in a construction of a simple compiler: a top-down, predictif compiler
 > composed by:
-> a lexical analyser
-> a sintax analyser
+> a lexical analyser,
+> a sintax analyser and
 > a semantic analyser with code generation
 
 ## What is zimbra2gmail for?
@@ -26,6 +26,24 @@ in January, 2018.
 
 Anyone can already use this project just as a learning (or teaching) tool
 of basic compiler principles.
+
+## Installation instructions
+
+There is a file called compile.sh in this project; it is a Bash script with
+the commands used to compile this project files with gcc. Your machine should
+have gcc already installed.
+
+After running compile.sh script, you should have availabe the executable file:
+
+zimbra2gmail
+
+To see it in action, i use commands like those below:
+
+./zimbra2gmail source-test-1
+
+./zimbra2gmail source-test-2
+
+Remember again: for the moment these project has only implemented the lexical analyser.
 
 ## LICENSE
 
