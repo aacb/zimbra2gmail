@@ -7,8 +7,8 @@
 void boo(char *);
 
 // global variables
-extern char msg[200], lexeme[200], *symbols;
+extern char msg[200], msgIdent[200], lexeme[200], *symbols, spaces[200], reservedWord[50][70];
 extern wint_t ch, chLast;
-extern int token;
+extern int token, tokens[50], reservedWordLen;
 extern FILE *fp;
 

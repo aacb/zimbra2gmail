@@ -37,7 +37,9 @@ After running compile.sh script, you should have availabe the executable file:
 
 zimbra2gmail
 
-To see it in action, i use commands like those below:
+In short, run these commands to compile and see it in action:
+
+./compile.sh
 
 ./zimbra2gmail source-test-1
 
