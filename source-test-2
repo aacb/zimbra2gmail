@@ -21,3 +21,9 @@ if anyof (address :all :contains :comparator "i;ascii-casemap" ["to","cc"] "cora
     stop;
 }
 
+# outros_destinatarios
+if anyof (not address :all :contains :comparator "i;ascii-casemap" ["to","cc"] "aacb@unesp.br") {
+    fileinto "Inbox/90outro_destino";
+    stop;
+}
+

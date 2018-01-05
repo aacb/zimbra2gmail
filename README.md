@@ -45,7 +45,7 @@ In short, run these commands to compile and see it in action:
 
 ./zimbra2gmail source-test-2
 
-Remember again: for the moment these project has only implemented the lexical analyser.
+Remember again: for the moment this project has only implemented the lexical analyser.
 
 ## LICENSE
 

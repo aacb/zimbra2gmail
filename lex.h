@@ -2,6 +2,8 @@
 #define LEX_H_
 
 int lexico(void);
+int lexicoAllExceptAspas(void);
+int lexicoFilterName(void);
 int openSourceFile(char *);
 void readNextChar(void);
 
