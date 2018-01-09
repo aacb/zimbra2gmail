@@ -24,7 +24,7 @@ to gmail.
 It is a project that started just before these last days of 2017
 (Christmas and New Year), was paused and then re-started in January 2018.
 
-It is now ready to use, noting that some Zimbra filter commands are still
+It is now (2018-01-09) ready to use, noting that some Zimbra filter commands are still
 missing, as they are not used by the first users we are migrating.
 
 Anyone can already use this project just as a learning (or teaching) tool

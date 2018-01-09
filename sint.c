@@ -53,6 +53,8 @@ redirect ::= REDIRECT ASPAS IDEXTENDED ASPAS PONTOEVIRGULA { REDIRECT ASPAS IDEX
 
 void require(), filters(), requiresRep(), conditions(), action(), expr(), exprRep(), exprHeader(), exprAddress(), exprBody(), exprDate(), exprDistributionList(), exprBulk(), exprToMe(), toMe(), header(), move(), flag(), tag(), discard(), keep(), redirect();
 
+void cleanLabel(char *);
+
 /*
  ************************************************************
  * Things to consider for the semantic actions that will be *
@@ -64,6 +66,33 @@ void require(), filters(), requiresRep(), conditions(), action(), expr(), exprRe
   label <label name>|markread|archive|star|forward <email address>|trash|neverspam|important|notimportant
 
 */
+
+void cleanLabel(char *myString) {
+  char *tmp, chTmp;
+  int tam;
+
+  if (myString[0] == '/') {
+    tmp = myString + 1;
+    strcpy(myString,tmp);
+  }
+  chTmp = myString[5];
+  myString[5] = '\0';
+  if ( !strcmp(myString, "Inbox") ) {
+    myString[5] = chTmp;
+    tmp = myString + 5;
+    strcpy(myString,tmp);
+    if (myString[0] == '/') {
+      tmp = myString + 1;
+      strcpy(myString,tmp);
+    }
+  } else {
+    myString[5] = chTmp;
+  }
+  if (strlen(myString) == 0) {
+    strcpy(myString, "inbox");
+  }
+}
+
 void msgLexError( int num, ...) {
   va_list valist;
   int i;
@@ -522,6 +551,7 @@ void move() {
   match(FILEINTO);
   matchTakingNextAllExceptAspas(ASPAS);
   strcpy(gamLabel, "label '");
+  cleanLabel(lexeme);
   strcat(gamLabel, lexeme);
   strcat(gamLabel, "' archive ");
   strcpy(gamCommand, gamUser);
@@ -538,6 +568,7 @@ void tag() {
   match(TAG);
   matchTakingNextAllExceptAspas(ASPAS);
   strcpy(gamLabel, "label myTaggedMessages/'");
+  cleanLabel(lexeme);
   strcat(gamLabel, lexeme);
   strcat(gamLabel, "' ");
   strcpy(gamCommand, gamUser);
