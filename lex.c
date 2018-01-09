@@ -32,7 +32,12 @@ void teste(void) {
 }
 
 int openSourceFile(char *fileName) {
-  fp = fopen(fileName, "r");
+  if ( access( fileName, R_OK ) != -1 )
+    fp = fopen(fileName, "r");
+  else {
+    printf("\nERROR ... could not open this file:\n%s\n", fileName);
+    exit(1);
+  }
 }
 
 

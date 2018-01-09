@@ -17,9 +17,9 @@ expr ::= expr-rep { VIRGULA expr-rep }
 
 expr-rep ::= [ NOT ] ( expr-header | expr-address | expr-body | expr-date | expr-bulk | expr-distribution-list | expr-to-me )
 
-expr-header ::= HEADER DOISPONTOS ( IS | CONTAINS | MATCHES ) ABRECOLCHETE ASPAS header ASPAS { VIRGULA ASPAS header ASPAS } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
+expr-header ::= HEADER DOISPONTOS ( IS | CONTAINS | MATCHES ) ABRECOLCHETE header { VIRGULA header } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
 
-expr-address ::= ADDRESS DOISPONTOS ( ALL | DOMAIN ) DOISPONTOS ( IS | CONTAINS | MATCHES ) DOISPONTOS COMPARATOR ASPAS ID PONTOEVIRGULA ASCII_CASEMAP ASPAS ABRECOLCHETE ASPAS header ASPAS { VIRGULA ASPAS header ASPAS } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
+expr-address ::= ADDRESS DOISPONTOS ( ALL | DOMAIN ) DOISPONTOS ( IS | CONTAINS | MATCHES ) DOISPONTOS COMPARATOR ASPAS ID PONTOEVIRGULA ASCII_CASEMAP ASPAS ABRECOLCHETE header { VIRGULA header } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
 
 expr-body ::= BODY DOISPONTOS CONTAINS ASPAS IDEXTENDED ASPAS 
 
@@ -33,7 +33,7 @@ expr-bulk ::= BULK
 
 to-me ::= ( TO [ VIRGULA CC ] | CC )
 
-header ::= ( TO | CC | FROM | SUBJECT | HEADER | ID )
+header ::= ASPAS ( TO | CC | FROM | SUBJECT | HEADER | ID ) ASPAS
 
 action ::= ABRECHAVES { move | tag | flag | discard | keep | redirect }1 [ STOP PONTOEVIRGULA ]  FECHACHAVES
 
@@ -53,6 +53,17 @@ redirect ::= REDIRECT ASPAS IDEXTENDED ASPAS PONTOEVIRGULA { REDIRECT ASPAS IDEX
 
 void require(), filters(), requiresRep(), conditions(), action(), expr(), exprRep(), exprHeader(), exprAddress(), exprBody(), exprDate(), exprDistributionList(), exprBulk(), exprToMe(), toMe(), header(), move(), flag(), tag(), discard(), keep(), redirect();
 
+/*
+ ************************************************************
+ * Things to consider for the semantic actions that will be *
+ * added to the parser                                      *
+ ************************************************************
+ // gmail gam command syntax for filters:
+ gam user <username>|group <groupname>|ou <ouname>|all users filter
+  from <email>|to <email>|subject <words>|haswords <words>|nowords <words>|musthaveattachment
+  label <label name>|markread|archive|star|forward <email address>|trash|neverspam|important|notimportant
+
+*/
 void msgLexError( int num, ...) {
   va_list valist;
   int i;
@@ -76,7 +87,7 @@ void msgLexError( int num, ...) {
 }
 
 void match (int tokenExpected) {
-  printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", spaces, lexeme, token, tokenExpected);
+  //printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", spaces, lexeme, token, tokenExpected);
   if (token == tokenExpected) {
     token = lexico();
   } else {
@@ -85,7 +96,7 @@ void match (int tokenExpected) {
 }
 
 void matchTakingNextAllExceptAspas (int tokenExpected) {
-  printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", spacesCall, lexeme, token, tokenExpected);
+  //printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", , lexeme, token, tokenExpected);
   if (token == tokenExpected) {
     token = lexicoAllExceptAspas();
   } else {
@@ -94,7 +105,7 @@ void matchTakingNextAllExceptAspas (int tokenExpected) {
 }
 
 void matchNextFilterName (int tokenExpected) {
-  printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", spacesCall, lexeme, token, tokenExpected);
+  //printf("%slexeme: %s\t\ttoken: %d\t\texpected token: %d\n", , lexeme, token, tokenExpected);
   if (token == tokenExpected) {
     token = lexicoFilterName();
   } else {
@@ -102,47 +113,45 @@ void matchNextFilterName (int tokenExpected) {
   }
 }
 
-void adjustIndent(char *sSpaces) {
-  strcpy(spaces, sSpaces);
-  strcat(spaces, "  ");
-  sprintf(spacesCall, "%s  ", sSpaces);
-}
-
-void zimbra2gmail(char *sSpaces) {
+void zimbra2gmail() {
   // zimbra2gmail ::= CERCA NAME ID require { filters }
-  adjustIndent(sSpaces);
   match(CERCA);
   match(NAME);
+  strcpy(emailAddr, lexeme);
+  sprintf(msg, "##### %s", emailAddr);
+  boo(msg);
   match(ID);
-  adjustIndent(sSpaces);
-  require(spacesCall);
-  adjustIndent(sSpaces);
+  require();
   while (token == CERCA) {
-    adjustIndent(sSpaces);
-    filters(spacesCall);
+    sprintf(gamUser, "gam user %s filter ", emailAddr);
+    filters();
   }
+  strcpy(msg, "# deleting the temporary label zLabelToStopActions");
+  boo(msg);
+  strcpy(gamCommand, "gam user ");
+  strcat(gamCommand, emailAddr);
+  strcat(gamCommand, " delete label zLabelToStopActions");
+  boo(gamCommand);
+  boo("");
 }
 
-void require(char *sSpaces) {
+void require() {
   // require ::= ZIMBRAMAILSIEVESCRIPT DOISPONTOS REQUIRE ABRECOLCHETE requires-rep { VIRGULA requires-rep } FECHACOLCHETE PONTOEVIRGULA
-  adjustIndent(sSpaces);
   match(ZIMBRAMAILSIEVESCRIPT);
   match(DOISPONTOS);
   match(REQUIRE);
   match(ABRECOLCHETE);
-  requiresRep(spacesCall);
+  requiresRep();
   while ( token == VIRGULA ) {
     match(VIRGULA);
-    adjustIndent(sSpaces);
-    requiresRep(spacesCall);
+    requiresRep();
   }
   match(FECHACOLCHETE);
   match(PONTOEVIRGULA);
 }
 
-void requiresRep(char *sSpaces) {
+void requiresRep() {
   // requires-rep ::= ASPAS ( FILEINTO | REJECT | TAG | FLAG ) ASPAS
-  adjustIndent(sSpaces);
   match(ASPAS);
   switch (token) {
     case FILEINTO:
@@ -163,26 +172,42 @@ void requiresRep(char *sSpaces) {
   match(ASPAS);
 }
 
-void filters(char *sSpaces) {
+void filters() {
   // filters ::= CERCA IDEXTENDED conditions action
-  adjustIndent(sSpaces);
   matchNextFilterName(CERCA);
+  strcpy(thisFilterName, lexeme);
+  strcpy(msg, "# ");
+  strcat(msg, thisFilterName);
+  boo(msg);
   match(IDFILTERNAME);
-  adjustIndent(sSpaces);
-  conditions(spacesCall);
-  adjustIndent(sSpaces);
-  action(spacesCall);
+  conditions();
+  action();
+  if (strlen(gamAction) > 0) {
+    strcpy(gamCommand, gamUser);
+    strcat(gamCommand, gamCondition);
+    strcat(gamCommand, gamAction);
+    boo(gamCommand);
+  }
+  if (!strcmp(hasStop, "y")) {
+    strcpy(gamCommand, gamUser);
+    strcat(gamCommand, gamCondition);
+    strcat(gamCommand, "label zLabelToStopActions");
+    boo(gamCommand);
+  }
+  boo("");
 }
 
 
-void conditions(char *sSpaces) {
+void conditions() {
   //conditions ::= ( IF | DISABLED_IF ) ( ANYOF | ALLOF ) ABREPARENTESIS expr FECHAPARENTESIS
-  adjustIndent(sSpaces);
+  strcpy(gamCondition, "haswords \"-label:zLabelToStopActions ");
   switch (token) {
     case IF:
+      strcpy(filterEnabled, "y");
       match(IF);
       break;
     case DISABLED_IF:
+      strcpy(filterEnabled, "n");
       match(DISABLED_IF);
       break;
     default:
@@ -191,34 +216,38 @@ void conditions(char *sSpaces) {
   
   switch (token) {
     case ANYOF:
+      strcpy(conditionType,"anyof");
       match(ANYOF);
       break;
     case ALLOF:
+      strcpy(conditionType,"allof");
       match(ALLOF);
       break;
     default:
       msgLexError(2, ALLOF, ANYOF);
   }
   match(ABREPARENTESIS);
-  adjustIndent(sSpaces);
-  expr(spacesCall);
+  expr();
   match(FECHAPARENTESIS);
 }
 
-void expr(char *sSpaces) {
+void expr() {
   // expr ::= expr-rep { VIRGULA expr-rep }
-  adjustIndent(sSpaces);
-  exprRep(spacesCall);
+  strcat(gamCondition, "(");
+  exprRep();
   while (token == VIRGULA) {
+    if ( !strcmp(conditionType, "anyof") )
+      strcat(gamCondition, "OR ");
     match(VIRGULA);
-    adjustIndent(sSpaces);
-    exprRep(spacesCall);
+    exprRep();
   }
+  strcat(gamCondition, ")\" ");
 }
 
-void exprRep(char *sSpaces) {
+void exprRep() {
   // expr-rep ::= [ NOT ] ( expr-header | expr-address | expr-body | expr-date | expr-bulk | expr-distribution-list | expr-me )
   if (token == NOT) {
+    strcat(gamCondition, "-");
     match(NOT);
   }
   switch (token) {
@@ -248,9 +277,40 @@ void exprRep(char *sSpaces) {
   }
 }
 
-void exprAddress(char *sSpaces) {
-  // expr-address ::= ADDRESS DOISPONTOS ( ALL | DOMAIN ) DOISPONTOS ( IS | CONTAINS | MATCHES ) DOISPONTOS COMPARATOR ASPAS ID PONTOEVIRGULA ASCII_CASEMAP ASPAS ABRECOLCHETE ASPAS header ASPAS { VIRGULA ASPAS header ASPAS } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
-  adjustIndent(sSpaces);
+void exprHeader() {
+  // expr-header ::= HEADER DOISPONTOS ( IS | CONTAINS | MATCHES ) ABRECOLCHETE header { VIRGULA header } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
+  match(HEADER);
+  match(DOISPONTOS);
+  switch (token) {
+    case IS:
+      match(IS);
+      break;
+    case CONTAINS:
+      match(CONTAINS);
+      break;
+    case MATCHES:
+      match(MATCHES);
+      break;
+    default:
+      msgLexError(3, CONTAINS, IS, MATCHES);
+  }
+  match(ABRECOLCHETE);
+  header();
+  while (token == VIRGULA) {
+    match(VIRGULA);
+    header();
+  }
+  match(FECHACOLCHETE);
+  matchTakingNextAllExceptAspas(ASPAS);
+  // replace(gamCondition, "xYz", lexeme);
+  replacedString = strReplace(gamCondition, "xYz", lexeme);
+  strcpy(gamCondition, replacedString);
+  match(IDEXTENDED);
+  match(ASPAS);
+}
+
+void exprAddress() {
+  // expr-address ::= ADDRESS DOISPONTOS ( ALL | DOMAIN ) DOISPONTOS ( IS | CONTAINS | MATCHES ) DOISPONTOS COMPARATOR ASPAS ID PONTOEVIRGULA ASCII_CASEMAP ASPAS ABRECOLCHETE header { VIRGULA header } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
   match(ADDRESS);
   match(DOISPONTOS);
   switch (token) {
@@ -263,8 +323,6 @@ void exprAddress(char *sSpaces) {
     default:
       msgLexError(2, ALL, DOMAIN);
   }
-
-
   match(DOISPONTOS);
   switch (token) {
     case IS:
@@ -287,73 +345,38 @@ void exprAddress(char *sSpaces) {
   match(ASCII_CASEMAP);
   match(ASPAS);
   match(ABRECOLCHETE);
-  match(ASPAS);
-  adjustIndent(sSpaces);
-  header(spacesCall);
-  match(ASPAS);
+  strcat(gamCondition, "(");
+  header();
   while (token == VIRGULA) {
+    strcat(gamCondition, "OR ");
     match(VIRGULA);
-    match(ASPAS);
-    adjustIndent(sSpaces);
-    header(spacesCall);
-    match(ASPAS);
+    header();
   }
+  strcat(gamCondition, ") ");
   match(FECHACOLCHETE);
   matchTakingNextAllExceptAspas(ASPAS);
+  // replace(gamCondition, "xYz", lexeme);
+  replacedString = strReplace(gamCondition, "xYz", lexeme);
+  strcpy(gamCondition, replacedString);
   match(IDEXTENDED);
   match(ASPAS);
 }
 
-void exprHeader(char *sSpaces) {
-  // expr-header ::= HEADER DOISPONTOS ( IS | CONTAINS | MATCHES ) ABRECOLCHETE ASPAS header ASPAS { VIRGULA ASPAS header ASPAS } FECHACOLCHETE ASPAS IDEXTENDED ASPAS
-  adjustIndent(sSpaces);
-  match(HEADER);
-  match(DOISPONTOS);
-  switch (token) {
-    case IS:
-      match(IS);
-      break;
-    case CONTAINS:
-      match(CONTAINS);
-      break;
-    case MATCHES:
-      match(MATCHES);
-      break;
-    default:
-      msgLexError(3, CONTAINS, IS, MATCHES);
-  }
-  match(ABRECOLCHETE);
-  match(ASPAS);
-  adjustIndent(sSpaces);
-  header(spacesCall);
-  match(ASPAS);
-  while (token == VIRGULA) {
-    match(VIRGULA);
-    match(ASPAS);
-    adjustIndent(sSpaces);
-    header(spacesCall);
-    match(ASPAS);
-  }
-  match(FECHACOLCHETE);
-  matchTakingNextAllExceptAspas(ASPAS);
-  match(IDEXTENDED);
-  match(ASPAS);
-}
-
-void exprBody(char *sSpaces) {
+void exprBody() {
   // expr-body ::= BODY DOISPONTOS CONTAINS ASPAS IDEXTENDED ASPAS 
-  adjustIndent(sSpaces);
   match(BODY);
+  strcat(gamCondition, "'");
   match(DOISPONTOS);
   match(CONTAINS);
   matchTakingNextAllExceptAspas(ASPAS);
+  strcat(gamCondition, lexeme);
+  strcat(gamCondition, "' ");
   match(IDEXTENDED);
   match(ASPAS);
 }
 
-void exprDate(char *sSpaces) {
+void exprDate() {
   // expr-date ::= DATE DOISPONTOS ( AFTER | BEFORE ) ASPAS IDEXTENDED ASPAS 
-  adjustIndent(sSpaces);
   match(DATE);
   match(DOISPONTOS);
   switch (token) {
@@ -371,9 +394,8 @@ void exprDate(char *sSpaces) {
   match(ASPAS);
 }
 
-void exprToMe(char *sSpaces) {
+void exprToMe() {
   // expr-to-me ::= ME DOISPONTOS IN ASPAS to-me ASPAS 
-  adjustIndent(sSpaces);
   match(ME);
   match(DOISPONTOS);
   match(IN);
@@ -382,132 +404,158 @@ void exprToMe(char *sSpaces) {
   match(ASPAS);
 }
 
-void toMe(char *sSpaces) {
+void exprDistributionList() {
+  // expr-distribution-list ::= LIST
+  match(LIST);
+}
+
+void exprBulk() {
+  // expr-bulk ::= BULK
+  match(BULK);
+}
+
+void toMe() {
   // to-me ::= ( TO [ VIRGULA CC ] | CC )
-  adjustIndent(sSpaces);
+  strcat(gamCondition, "(");
   switch (token) {
     case TO:
-      match(TO);
+      strcat(gamCondition, "to:'");
+      strcat(gamCondition, emailAddr);
+      strcat(gamCondition, "' "); match(TO);
       if (token == VIRGULA) {
+        strcat(gamCondition, "OR cc:'");
+        strcat(gamCondition, emailAddr);
+        strcat(gamCondition, "' ");
         match(VIRGULA);
         match(CC);
       }
       break;
     case CC:
-      match(CC);
+      strcat(gamCondition, "cc:'");
+      strcat(gamCondition, emailAddr);
+      strcat(gamCondition, "' ");
       break;
     default:
       msgLexError(2, CC, TO);
   }
+  strcat(gamCondition, ") ");
+  // replace(gamCondition, "xYz", emailAddr)
+  replacedString = strReplace(gamCondition, "xYz", emailAddr);
+  strcpy(gamCondition, replacedString);
 }
 
-void exprBulk(char *sSpaces) {
-  // expr-bulk ::= BULK
-  adjustIndent(sSpaces);
-  match(BULK);
-}
-
-void exprDistributionList(char *sSpaces) {
-  // expr-distribution-list ::= LIST
-  adjustIndent(sSpaces);
-  match(LIST);
-}
-
-void header(char *sSpaces) {
-  // header ::= ( TO | CC | FROM | SUBJECT | HEADER | ID )
-  adjustIndent(sSpaces);
+void header() {
+  // header ::= ASPAS ( TO | CC | FROM | SUBJECT | HEADER | ID ) ASPAS
+  match(ASPAS);
   switch (token) {
     case TO:
+      strcat(gamCondition, "to:'");
       match(TO);
       break;
     case CC:
+      strcat(gamCondition, "cc:'");
       match(CC);
       break;
     case FROM:
+      strcat(gamCondition, "from:'");
       match(FROM);
       break;
     case SUBJECT:
+      strcat(gamCondition, "subject:'");
       match(SUBJECT);
       break;
     case HEADER:
+      strcat(gamCondition, "header:'");
       match(HEADER);
       break;
     case ID:
+      strcat(gamCondition, lexeme);
+      strcat(gamCondition, ":'");
       match(ID);
       break;
     default:
       msgLexError(5, CC, HEADER, FROM, ID, SUBJECT, TO);
   }
+  match(ASPAS);
+  strcat(gamCondition, "xYz' ");
 }
 
-void action(char *sSpaces) {
+void action() {
   // action ::= ABRECHAVES { move | tag | flag | discard | keep | redirect }1 [ STOP PONTOEVIRGULA ]  FECHACHAVES
-  adjustIndent(sSpaces);
+  strcpy(gamAction, "");
   match(ABRECHAVES);
   while (token == FILEINTO || token == TAG || token == FLAG || token == DISCARD || token == KEEP || token == REDIRECT ) {
     switch (token) {
       case FILEINTO:
-        adjustIndent(sSpaces);
-        move(spacesCall);
+        move();
         break;
       case TAG:
-        adjustIndent(sSpaces);
-        tag(spacesCall);
+        tag();
         break;
       case FLAG:
-        adjustIndent(sSpaces);
-        flag(spacesCall);
+        flag();
         break;
       case DISCARD:
-        adjustIndent(sSpaces);
-        discard(spacesCall);
+        discard();
         break;
       case KEEP:
-        adjustIndent(sSpaces);
-        keep(spacesCall);
+        keep();
         break;
       case REDIRECT:
-        adjustIndent(sSpaces);
-        redirect(spacesCall);
+        redirect();
         break;
       default:
         msgLexError(6, DISCARD, FILEINTO, FLAG, KEEP, REDIRECT, TAG);
     }
   }
+  strcpy(hasStop, "n");
   if (token == STOP) {
+    strcpy(hasStop, "y");
     match(STOP);
     match(PONTOEVIRGULA);
   }
   match(FECHACHAVES);
 }
 
-void move(char *sSpaces) {
+void move() {
   // move ::= FILEINTO ASPAS IDEXTENDED ASPAS PONTOEVIRGULA
-  adjustIndent(sSpaces);
   match(FILEINTO);
   matchTakingNextAllExceptAspas(ASPAS);
+  strcpy(gamLabel, "label '");
+  strcat(gamLabel, lexeme);
+  strcat(gamLabel, "' archive ");
+  strcpy(gamCommand, gamUser);
+  strcat(gamCommand, gamCondition);
+  strcat(gamCommand, gamLabel);
+  boo(gamCommand);
   match(IDEXTENDED);
   match(ASPAS);
   match(PONTOEVIRGULA);
 }
 
-void tag(char *sSpaces) {
+void tag() {
   // tag ::= TAG ASPAS IDEXTENDED ASPAS PONTOEVIRGULA
-  adjustIndent(sSpaces);
   match(TAG);
   matchTakingNextAllExceptAspas(ASPAS);
+  strcpy(gamLabel, "label myTaggedMessages/'");
+  strcat(gamLabel, lexeme);
+  strcat(gamLabel, "' ");
+  strcpy(gamCommand, gamUser);
+  strcat(gamCommand, gamCondition);
+  strcat(gamCommand, gamLabel);
+  boo(gamCommand);
   match(IDEXTENDED);
   match(ASPAS);
   match(PONTOEVIRGULA);
 }
 
-void flag(char *sSpaces) {
+void flag() {
   // flag ::= FLAG ASPAS ( READ ) ASPAS PONTOEVIRGULA
-  adjustIndent(sSpaces);
   match(FLAG);
   match(ASPAS);
   switch (token) {
     case READ:
+      strcat(gamAction, "markread ");
       match(READ);
       break;
     default:
@@ -517,39 +565,48 @@ void flag(char *sSpaces) {
   match(PONTOEVIRGULA);
 }
 
-void discard(char *sSpaces) {
+void discard() {
   // discard ::= DISCARD PONTOEVIRGULA
-  adjustIndent(sSpaces);
+  strcat(gamAction, "trash ");
   match(DISCARD);
   match(PONTOEVIRGULA);
 }
 
-void keep(char *sSpaces) {
+void keep() {
   // keep ::= KEEP PONTOEVIRGULA
-  adjustIndent(sSpaces);
+  strcpy(gamLabel, "label inbox ");
+  strcpy(gamCommand, gamUser);
+  strcat(gamCommand, gamCondition);
+  strcat(gamCommand, gamLabel);
+  boo(gamCommand);
   match(KEEP);
   match(PONTOEVIRGULA);
 }
 
-void redirect(char *sSpaces) {
+void redirect() {
   // redirect ::= REDIRECT ASPAS IDEXTENDED ASPAS PONTOEVIRGULA { REDIRECT ASPAS IDEXTENDED ASPAS PONTOEVIRGULA } [ keep ]
-  adjustIndent(sSpaces);
   match(REDIRECT);
   matchTakingNextAllExceptAspas(ASPAS);
+  strcat(gamAction, "forward '");
+  strcat(gamAction, lexeme);
+  strcat(gamAction, "' ");
   match(IDEXTENDED);
   match(ASPAS);
   match(PONTOEVIRGULA);
   while (token == REDIRECT) {
-    adjustIndent(sSpaces);
     match(REDIRECT);
     matchTakingNextAllExceptAspas(ASPAS);
+    strcat(gamAction, "forward '");
+    strcat(gamAction, lexeme);
+    strcat(gamAction, "' ");
     match(IDEXTENDED);
     match(ASPAS);
     match(PONTOEVIRGULA);
   }
   if (token == KEEP) {
-    adjustIndent(sSpaces);
-    keep(spacesCall);
+    keep();
+  } else {
+    strcat(gamAction, "trash ");
   }
 }
 
