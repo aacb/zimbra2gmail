@@ -77,9 +77,9 @@ int findReservedWord(char *rWord, int fIndex, int lIndex) {
   }
   if ( strcmp(rWord, reservedWord[lIndex]) < 0 ) {
     if ( strcmp(rWord, reservedWord[ind]) < 0 ) {
-      findReservedWord(rWord, fIndex, ind);
+      return findReservedWord(rWord, fIndex, ind);
     } else {
-      findReservedWord(rWord, ind, lIndex);
+      return findReservedWord(rWord, ind, lIndex);
     }
   } else {
       return -1;
