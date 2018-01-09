@@ -31,7 +31,7 @@ void teste(void) {
   printf( "hello, world\n" );
 }
 
-int openSourceFile(char *fileName) {
+void openSourceFile(char *fileName) {
   if ( access( fileName, R_OK ) != -1 )
     fp = fopen(fileName, "r");
   else {
