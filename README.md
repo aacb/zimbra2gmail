@@ -10,7 +10,8 @@
 
 ## What is zimbra2gmail for?
 zimbra2gmail is written to have, as its source files, the Zimbra users
-filters; and as its target, the gmail users filters.
+filters; and as its target, a set of Google GAM commands to create
+the corresponding gmail users filters.
 
 Given the gmail users filters as text file, we can use a tool like gam
 to apply this filters to gmail. Without a compiler like zimbra2gmail,
@@ -20,12 +21,15 @@ to gmail.
 
 ## Usage
 
-It is a project that just started, and is expected to become inactif during
-these last days of 2017 (Christmas and New Year). It should be ready to use
-in January, 2018.
+It is a project that started just before these last days of 2017
+(Christmas and New Year), was paused and then re-started in January 2018.
+
+It is now ready to use, noting that some Zimbra filter commands are still
+missing, as they are not used by the first users we are migrating.
 
 Anyone can already use this project just as a learning (or teaching) tool
-of basic compiler principles.
+of basic compiler principles, based on a top-down approach with a regular
+grammar for a preditif parser.
 
 ## Installation instructions
 
@@ -44,8 +48,6 @@ In short, run these commands to compile and see it in action:
 ./zimbra2gmail source-test-1
 
 ./zimbra2gmail source-test-2
-
-Remember again: for the moment this project has only implemented the lexical analyser.
 
 ## LICENSE
 
