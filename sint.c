@@ -155,13 +155,6 @@ void zimbra2gmail() {
     sprintf(gamUser, "gam user %s filter ", emailAddr);
     filters();
   }
-  strcpy(msg, "# deleting the temporary label zLabelToStopActions");
-  boo(msg);
-  strcpy(gamCommand, "gam user ");
-  strcat(gamCommand, emailAddr);
-  strcat(gamCommand, " delete label zLabelToStopActions");
-  boo(gamCommand);
-  boo("");
 }
 
 void require() {
