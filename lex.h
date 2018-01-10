@@ -4,7 +4,7 @@
 int lexico(void);
 int lexicoAllExceptAspas(void);
 int lexicoFilterName(void);
-int openSourceFile(char *);
+void openSourceFile(char *);
 void readNextChar(void);
 
 #endif // LEX_H_
